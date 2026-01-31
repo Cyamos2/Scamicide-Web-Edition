@@ -81,15 +81,23 @@ export const saveAnalysis = (analysisData) => {
 
   stmt.run(
     id,
-    analysisData.inputText || '',
-    analysisData.inputUrl || null,
-    analysisData.score,
-    analysisData.category,
-    JSON.stringify(analysisData.redFlags),
+    analysisData.inputText || analysisData.input_text || '',
+    analysisData.inputUrl || analysisData.input_url || null,
+    analysisData.score || analysisData.risk_score || 0,
+    analysisData.category || analysisData.risk_category || 'Unknown',
+    JSON.stringify(analysisData.redFlags || analysisData.red_flags || []),
     analysisData.explanation || null
   );
 
-  return { id, ...analysisData };
+  return { 
+    id, 
+    input_text: analysisData.inputText || analysisData.input_text || '',
+    input_url: analysisData.inputUrl || analysisData.input_url || null,
+    risk_score: analysisData.score || analysisData.risk_score || 0,
+    risk_category: analysisData.category || analysisData.risk_category || 'Unknown',
+    red_flags: analysisData.redFlags || analysisData.red_flags || [],
+    explanation: analysisData.explanation || null
+  };
 };
 
 /**
@@ -106,8 +114,14 @@ export const getAnalysisHistory = (limit = 50, offset = 0) => {
   const results = stmt.all(limit, offset);
 
   return results.map(row => ({
-    ...row,
-    red_flags: JSON.parse(row.red_flags)
+    id: row.id,
+    input_text: row.input_text,
+    input_url: row.input_url,
+    risk_score: row.risk_score,
+    risk_category: row.risk_category,
+    red_flags: typeof row.red_flags === 'string' ? JSON.parse(row.red_flags) : row.red_flags,
+    explanation: row.explanation,
+    created_at: row.created_at
   }));
 };
 
@@ -128,8 +142,14 @@ export const getAnalysisById = (id) => {
   }
 
   return {
-    ...row,
-    red_flags: JSON.parse(row.red_flags)
+    id: row.id,
+    input_text: row.input_text,
+    input_url: row.input_url,
+    risk_score: row.risk_score,
+    risk_category: row.risk_category,
+    red_flags: typeof row.red_flags === 'string' ? JSON.parse(row.red_flags) : row.red_flags,
+    explanation: row.explanation,
+    created_at: row.created_at
   };
 };
 

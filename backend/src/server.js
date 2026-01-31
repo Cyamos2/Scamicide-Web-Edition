@@ -10,6 +10,7 @@ import morgan from 'morgan';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import analyzeRoutes from './routes/analyze.js';
+import { initializeDatabase } from './database/db.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import { requestLogger } from './middleware/requestLogger.js';
 
@@ -18,6 +19,9 @@ const __dirname = dirname(__filename);
 
 const app = express();
 const PORT = process.env.PORT || 3001;
+
+// Initialize database
+initializeDatabase();
 
 // Middleware configuration
 app.use(helmet({
