@@ -32,21 +32,23 @@ const SUSPICIOUS_PHRASES = [
   /保证金/i
 ];
 
-export const detectGrammarRedFlags = (text) => {
+export const detectGrammarRedFlags = (text, isLegitimateSource = false) => {
   const flags = [];
   let totalScore = 0;
+  const grammarMultiplier = isLegitimateSource ? 0.5 : 1; // Reduce grammar penalties for legitimate sources
 
   for (const [category, config] of Object.entries(GRAMMAR_PATTERNS)) {
     const matches = text.match(config.pattern);
     if (matches && matches.length > 0) {
+      const adjustedWeight = Math.floor(config.weight * grammarMultiplier);
       flags.push({
         type: 'grammar',
         category: category,
         message: config.message,
-        weight: config.weight,
+        weight: adjustedWeight,
         count: matches.length
       });
-      totalScore += config.weight * Math.min(matches.length, 3);
+      totalScore += adjustedWeight * Math.min(matches.length, 3);
     }
   }
 

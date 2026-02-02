@@ -4,6 +4,7 @@ import { analyzeText } from './services/api'
 import ScoreDisplay from './components/ScoreDisplay'
 import RedFlagList from './components/RedFlagList'
 import HistoryPanel from './components/HistoryPanel'
+import ScoreBreakdown from './components/ScoreBreakdown'
 
 function App() {
   const [text, setText] = useState('')
@@ -215,7 +216,14 @@ function App() {
                     categoryIcon={result.categoryIcon}
                     explanation={result.explanation}
                   />
+                  <ScoreBreakdown detectorResults={result.detectorResults} />
                   <RedFlagList redFlags={result.redFlags} />
+                  {result.sourceInfo?.isLegitimate && (
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-700">
+                      <strong>✓ Recognized Source:</strong> This job posting is from a known legitimate 
+                      platform ({result.sourceInfo.url}). Some flags have been reduced accordingly.
+                    </div>
+                  )}
                 </div>
               ) : (
                 <div className="card bg-gray-50 text-center py-16">
@@ -286,6 +294,7 @@ Only serious candidates apply!`
                   categoryIcon={result.categoryIcon}
                   explanation={result.explanation}
                 />
+                <ScoreBreakdown detectorResults={result.detectorResults} />
                 <RedFlagList redFlags={result.redFlags} />
               </div>
             )}

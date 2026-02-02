@@ -38,7 +38,7 @@ const COMMUNICATION_KEYWORDS = {
   }
 };
 
-export const detectCommunicationRedFlags = (text) => {
+export const detectCommunicationRedFlags = (text, isLegitimateSource = false) => {
   const flags = [];
   let totalScore = 0;
   const normalizedText = text.toLowerCase();
@@ -46,14 +46,30 @@ export const detectCommunicationRedFlags = (text) => {
   for (const [category, config] of Object.entries(COMMUNICATION_KEYWORDS)) {
     for (const pattern of config.patterns) {
       if (pattern.test(normalizedText)) {
+        // Reduce weight for legitimate sources (they may have @company.com emails that pass through)
+        // but still flag truly suspicious patterns
+        let adjustedWeight = config.weight;
+        
+        if (isLegitimateSource) {
+          // Reduce email flags for legitimate sources (they use professional platforms)
+          if (category === 'emailRedFlags') {
+            adjustedWeight = Math.floor(config.weight * 0.5); // 50% reduction
+          }
+          // Reduce interview flags for legitimate sources
+          if (category === 'interviewRedFlags') {
+            adjustedWeight = Math.floor(config.weight * 0.75); // 25% reduction
+          }
+          // Keep off-platform apps at full weight (always suspicious)
+        }
+
         flags.push({
           type: 'communication',
           category: category,
           message: config.message,
-          weight: config.weight,
+          weight: adjustedWeight,
           matchedText: text.match(pattern)?.[0] || ''
         });
-        totalScore += config.weight;
+        totalScore += adjustedWeight;
         break;
       }
     }

@@ -10,6 +10,37 @@ import detectCommunicationRedFlags from '../detectors/communicationDetector.js';
 import detectCompanyRedFlags from '../detectors/companyDetector.js';
 import detectGrammarRedFlags from '../detectors/grammarDetector.js';
 
+// Legitimate job platforms that may trigger false positives
+// When content comes from these sources, certain flags are reduced or exempted
+const LEGITIMATE_DOMAINS = [
+  'myworkday.com',
+  'linkedin.com',
+  'linkedin.com/jobs',
+  'indeed.com',
+  'glassdoor.com',
+  'ziprecruiter.com',
+  'monster.com',
+  'careerbuilder.com',
+  'simplyhired.com',
+  'dice.com',
+  'techcareers.com',
+  'recruitingcareers.com',
+  'jobvite.com',
+  'lever.co',
+  'greenhouse.io',
+  'workable.com',
+  'icims.com',
+  'smartsheet.com',
+  'ashbyhq.com'
+];
+
+// Check if URL is from a legitimate source
+export const isLegitimateSource = (url) => {
+  if (!url) return false;
+  const urlLower = url.toLowerCase();
+  return LEGITIMATE_DOMAINS.some(domain => urlLower.includes(domain));
+};
+
 const RISK_CATEGORIES = {
   CRITICAL: { min: 80, max: 100, label: 'Critical', color: '#dc2626', icon: '🚨' },
   HIGH: { min: 60, max: 79, label: 'High', color: '#ea580c', icon: '⚠️' },
@@ -55,13 +86,16 @@ export const analyzeText = (text, url = null) => {
     };
   }
 
+  // Check if source is legitimate (reduces false positives)
+  const legitimateSource = isLegitimateSource(url);
+
   const detectorResults = {
     payment: detectPaymentRedFlags(text),
     identity: detectIdentityRedFlags(text),
     urgency: detectUrgencyRedFlags(text),
-    communication: detectCommunicationRedFlags(text),
+    communication: detectCommunicationRedFlags(text, legitimateSource),
     company: detectCompanyRedFlags(text),
-    grammar: detectGrammarRedFlags(text)
+    grammar: detectGrammarRedFlags(text, legitimateSource)
   };
 
   let totalScore = 0;
@@ -75,7 +109,10 @@ export const analyzeText = (text, url = null) => {
     })));
   }
 
-  const finalScore = Math.min(totalScore, 100);
+  // Apply reduction for legitimate sources (max 15 point reduction)
+  let finalScore = legitimateSource ? Math.max(totalScore - 15, 0) : totalScore;
+  finalScore = Math.min(finalScore, 100);
+  
   const category = getRiskCategory(finalScore);
   const sortedFlags = allFlags.sort((a, b) => b.weight - a.weight);
   const explanation = generateExplanation({ score: finalScore });
@@ -93,7 +130,12 @@ export const analyzeText = (text, url = null) => {
     ),
     explanation,
     textLength: text.length,
-    analyzedAt: new Date().toISOString()
+    analyzedAt: new Date().toISOString(),
+    sourceInfo: {
+      url: url,
+      isLegitimate: legitimateSource,
+      reducedScore: legitimateSource && totalScore > 15
+    }
   };
 };
 
