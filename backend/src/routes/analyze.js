@@ -59,17 +59,29 @@ router.post('/',
 
     let analysisResult;
 
-    if (text) {
-      analysisResult = analyzeText(text, url);
-    } else {
-      analysisResult = await analyzeUrl(url);
+    try {
+      if (text) {
+        analysisResult = analyzeText(text, url);
+      } else {
+        analysisResult = await analyzeUrl(url);
+      }
+    } catch (analysisError) {
+      console.error('Analysis error:', analysisError);
+      return res.status(500).json({
+        success: false,
+        error: {
+          message: 'Failed to analyze content',
+          code: 'ANALYSIS_ERROR',
+          status: 500
+        }
+      });
     }
 
-    if (!analysisResult.success) {
+    if (!analysisResult || !analysisResult.success) {
       return res.status(400).json({
         success: false,
         error: {
-          message: analysisResult.error,
+          message: analysisResult?.error || 'Analysis failed',
           code: 'ANALYSIS_FAILED',
           status: 400
         }
@@ -86,8 +98,13 @@ router.post('/',
           red_flags: analysisResult.redFlags,
           explanation: analysisResult.explanation
         });
-        analysisResult.id = saved.id;
-        analysisResult.savedToHistory = true;
+        
+        if (saved) {
+          analysisResult.id = saved.id;
+          analysisResult.savedToHistory = true;
+        } else {
+          analysisResult.savedToHistory = false;
+        }
       } catch (dbError) {
         console.error('Failed to save analysis:', dbError);
         analysisResult.savedToHistory = false;

@@ -75,6 +75,7 @@ export const generateExplanation = (analysis) => {
 };
 
 export const analyzeText = (text, url = null) => {
+  // Validate input
   if (!text || typeof text !== 'string' || text.trim().length === 0) {
     return {
       success: false,
@@ -89,24 +90,30 @@ export const analyzeText = (text, url = null) => {
   // Check if source is legitimate (reduces false positives)
   const legitimateSource = isLegitimateSource(url);
 
+  // Run all detectors with defensive null checks
   const detectorResults = {
-    payment: detectPaymentRedFlags(text),
-    identity: detectIdentityRedFlags(text),
-    urgency: detectUrgencyRedFlags(text),
-    communication: detectCommunicationRedFlags(text, legitimateSource),
-    company: detectCompanyRedFlags(text),
-    grammar: detectGrammarRedFlags(text, legitimateSource)
+    payment: detectPaymentRedFlags ? detectPaymentRedFlags(text) : { score: 0, flags: [], hasRedFlags: false },
+    identity: detectIdentityRedFlags ? detectIdentityRedFlags(text) : { score: 0, flags: [], hasRedFlags: false },
+    urgency: detectUrgencyRedFlags ? detectUrgencyRedFlags(text) : { score: 0, flags: [], hasRedFlags: false },
+    communication: detectCommunicationRedFlags ? detectCommunicationRedFlags(text, legitimateSource) : { score: 0, flags: [], hasRedFlags: false },
+    company: detectCompanyRedFlags ? detectCompanyRedFlags(text) : { score: 0, flags: [], hasRedFlags: false },
+    grammar: detectGrammarRedFlags ? detectGrammarRedFlags(text, legitimateSource) : { score: 0, flags: [], hasRedFlags: false }
   };
 
   let totalScore = 0;
   const allFlags = [];
 
   for (const [name, result] of Object.entries(detectorResults)) {
-    totalScore += result.score;
-    allFlags.push(...result.flags.map(flag => ({
-      ...flag,
-      detector: name
-    })));
+    // Defensive check for result
+    if (result && typeof result === 'object') {
+      totalScore += result.score || 0;
+      if (result.flags && Array.isArray(result.flags)) {
+        allFlags.push(...result.flags.map(flag => ({
+          ...flag,
+          detector: name
+        })));
+      }
+    }
   }
 
   // Apply reduction for legitimate sources (max 15 point reduction)
@@ -114,7 +121,11 @@ export const analyzeText = (text, url = null) => {
   finalScore = Math.min(finalScore, 100);
   
   const category = getRiskCategory(finalScore);
-  const sortedFlags = allFlags.sort((a, b) => b.weight - a.weight);
+  const sortedFlags = allFlags.sort((a, b) => {
+    const weightA = a?.weight || 0;
+    const weightB = b?.weight || 0;
+    return weightB - weightA;
+  });
   const explanation = generateExplanation({ score: finalScore });
 
   return {
@@ -126,13 +137,16 @@ export const analyzeText = (text, url = null) => {
     categoryIcon: category.icon,
     redFlags: sortedFlags,
     detectorResults: Object.fromEntries(
-      Object.entries(detectorResults).map(([key, val]) => [key, { score: val.score, hasRedFlags: val.hasRedFlags }])
+      Object.entries(detectorResults).map(([key, val]) => [key, { 
+        score: val?.score || 0, 
+        hasRedFlags: val?.hasRedFlags || false 
+      }])
     ),
     explanation,
     textLength: text.length,
     analyzedAt: new Date().toISOString(),
     sourceInfo: {
-      url: url,
+      url: url || null,
       isLegitimate: legitimateSource,
       reducedScore: legitimateSource && totalScore > 15
     }

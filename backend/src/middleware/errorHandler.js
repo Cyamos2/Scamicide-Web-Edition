@@ -79,12 +79,25 @@ export const errorHandler = (err, req, res, next) => {
     method: req.method
   });
 
+  // Handle JSON parsing errors
   if (err.name === 'SyntaxError' && err.status === 400 && 'body' in err) {
     return res.status(400).json({
       success: false,
       error: {
         message: 'Invalid JSON in request body',
         code: 'INVALID_JSON',
+        status: 400
+      }
+    });
+  }
+
+  // Handle express-validator validation errors
+  if (err.type === 'entity.parse.failed' || err.type === 'entity.validation.failed') {
+    return res.status(400).json({
+      success: false,
+      error: {
+        message: 'Invalid request data',
+        code: 'VALIDATION_ERROR',
         status: 400
       }
     });
@@ -113,6 +126,7 @@ export const errorHandler = (err, req, res, next) => {
     });
   }
 
+  // Handle SQLite specific errors
   if (err.code && err.code.startsWith('SQLITE_')) {
     console.error('Database Error:', err);
     return res.status(500).json({
@@ -125,6 +139,33 @@ export const errorHandler = (err, req, res, next) => {
     });
   }
 
+  // Handle better-sqlite3 specific errors
+  if (err.message && err.message.includes('SQLITE')) {
+    console.error('SQLite Error:', err);
+    return res.status(500).json({
+      success: false,
+      error: {
+        message: 'Database operation failed',
+        code: 'DATABASE_ERROR',
+        status: 500
+      }
+    });
+  }
+
+  // Handle TypeError (common with undefined values)
+  if (err instanceof TypeError) {
+    console.error('Type Error:', err);
+    return res.status(500).json({
+      success: false,
+      error: {
+        message: 'Internal server error',
+        code: 'INTERNAL_ERROR',
+        status: 500
+      }
+    });
+  }
+
+  // Handle unknown errors
   const statusCode = err.statusCode || 500;
   const isDevelopment = process.env.NODE_ENV === 'development';
 
