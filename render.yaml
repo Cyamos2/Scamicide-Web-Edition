@@ -17,10 +17,6 @@ services:
         value: "443"
       - key: DB_PATH
         value: /data/scamicide.db
-    disk:
-      - name: scamicide-data
-        mountPath: /data
-        sizeGB: 1
 
   # Frontend Static Site
   - type: web
@@ -35,4 +31,11 @@ services:
         value: production
       - key: VITE_API_URL
         value: https://scamicide-api.onrender.com/api
+
+# Persistent disk for database (mounted to backend service)
+disks:
+  - name: scamicide-data
+    mountPath: /data
+    sizeGB: 1
+    serviceName: scamicide-api
 
