@@ -10,7 +10,11 @@ const api = axios.create({
 
 export const analyzeText = async (text, url = null) => {
   const response = await api.post('/analyze', { text, url })
-  return response.data
+  // Unwrap the response to return just the analysis data
+  if (response.data && response.data.success) {
+    return response.data.data
+  }
+  throw new Error(response.data?.error?.message || 'Analysis failed')
 }
 
 export const getHistory = async (limit = 50, offset = 0) => {

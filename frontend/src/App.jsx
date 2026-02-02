@@ -25,10 +25,16 @@ function App() {
     setError(null)
 
     try {
-      const response = await analyzeText(text, url || null)
-      setResult(response.data)
+      const analysisResult = await analyzeText(text, url || null)
+      // Add missing fields that ScoreDisplay expects
+      const enrichedResult = {
+        ...analysisResult,
+        categoryColor: analysisResult.categoryColor || getCategoryColor(analysisResult.score),
+        categoryIcon: analysisResult.categoryIcon || getCategoryIcon(analysisResult.score)
+      }
+      setResult(enrichedResult)
     } catch (err) {
-      setError(err.response?.data?.error?.message || 'Analysis failed. Please try again.')
+      setError(err.message || 'Analysis failed. Please try again.')
     } finally {
       setLoading(false)
     }
@@ -41,16 +47,36 @@ function App() {
     setError(null)
   }
 
+  // Helper function to get category color based on score
+  const getCategoryColor = (score) => {
+    if (score >= 80) return '#dc2626' // red-600
+    if (score >= 60) return '#ea580c' // orange-600
+    if (score >= 40) return '#ca8a04' // yellow-600
+    return '#16a34a' // green-600
+  }
+
+  // Helper function to get category icon based on score
+  const getCategoryIcon = (score) => {
+    if (score >= 80) return '🚨'
+    if (score >= 60) return '⚠️'
+    if (score >= 40) return '⚡'
+    return '✅'
+  }
+
   const loadFromHistory = (item) => {
     setText(item.input_text || '')
     setUrl(item.input_url || '')
-    setResult({
+    // Create enriched result with all required fields for ScoreDisplay
+    const enrichedResult = {
       score: item.risk_score,
       category: item.risk_category,
       redFlags: item.red_flags,
       explanation: item.explanation,
-      analyzedAt: item.created_at
-    })
+      analyzedAt: item.created_at,
+      categoryColor: getCategoryColor(item.risk_score),
+      categoryIcon: getCategoryIcon(item.risk_score)
+    }
+    setResult(enrichedResult)
     setShowHistory(false)
     setActiveTab('analyze')
   }
@@ -217,8 +243,7 @@ function App() {
                 setLoading(true)
                 setError(null)
                 try {
-                  const response = await analyzeText(
-                    `URGENT HIRING: We are looking for immediate hires for a work-from-home position.
+                  const sampleText = `URGENT HIRING: We are looking for immediate hires for a work-from-home position.
 Pay: $50/hour - start immediately!
 
 Requirements:
@@ -231,12 +256,17 @@ Contact me at: hiring@company-gmail.com
 
 This is a legitimate opportunity. Send me your details and I will send you a check to buy equipment.
 
-Only serious candidates apply!`,
-                    null
-                  )
-                  setResult(response.data)
+Only serious candidates apply!`
+                  const analysisResult = await analyzeText(sampleText, null)
+                  // Enrich result with missing fields for ScoreDisplay
+                  const enrichedResult = {
+                    ...analysisResult,
+                    categoryColor: analysisResult.categoryColor || getCategoryColor(analysisResult.score),
+                    categoryIcon: analysisResult.categoryIcon || getCategoryIcon(analysisResult.score)
+                  }
+                  setResult(enrichedResult)
                 } catch (err) {
-                  setError(err.response?.data?.error?.message || 'Analysis failed')
+                  setError(err.message || 'Analysis failed')
                 } finally {
                   setLoading(false)
                 }

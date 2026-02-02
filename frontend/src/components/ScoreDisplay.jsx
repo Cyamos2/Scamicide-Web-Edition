@@ -1,6 +1,11 @@
 import { Info } from 'lucide-react'
 
 const ScoreDisplay = ({ score, category, categoryColor, categoryIcon, explanation }) => {
+  // Fallback values for missing props
+  const displayColor = categoryColor || (score >= 80 ? '#dc2626' : score >= 60 ? '#ea580c' : score >= 40 ? '#ca8a04' : '#16a34a')
+  const displayIcon = categoryIcon || (score >= 80 ? '🚨' : score >= 60 ? '⚠️' : score >= 40 ? '⚡' : '✅')
+  const displayCategory = category || (score >= 80 ? 'Critical' : score >= 60 ? 'High' : score >= 40 ? 'Medium' : 'Low')
+
   return (
     <div className="card">
       <div className="flex items-center gap-4 mb-6">
@@ -42,9 +47,9 @@ const ScoreDisplay = ({ score, category, categoryColor, categoryIcon, explanatio
             score >= 60 ? 'bg-orange-100' :
             score >= 40 ? 'bg-yellow-100' : 'bg-green-100'
           }`}>
-            <span className="text-2xl">{categoryIcon}</span>
-            <span className="font-bold text-lg" style={{ color: categoryColor }}>
-              {category} Risk
+            <span className="text-2xl">{displayIcon}</span>
+            <span className="font-bold text-lg" style={{ color: displayColor }}>
+              {displayCategory} Risk
             </span>
           </div>
         </div>
