@@ -1,0 +1,43 @@
+services:
+  # Backend Web Service
+  - type: web
+    name: scamicide-api
+    repo: christopheramos/Scamicide
+    rootDirectory: backend
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: "443"
+      - key: DB_PATH
+        value: /data/scamicide.db
+      - key: FRONTEND_URL
+        fromService:
+          type: web
+          name: scamicide-frontend
+          property: url
+          optional: true
+
+    # Persistent disk for database
+    disks:
+      - name: scamicide-data
+        mountPath: /data
+        sizeGB: 1
+
+  # Frontend Static Site
+  - type: web
+    name: scamicide-frontend
+    repo: christopheramos/Scamicide
+    rootDirectory: frontend
+    buildCommand: npm install && npm run build
+    startCommand: npx serve dist -s -l $PORT
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: VITE_API_URL
+        value: https://scamicide-api.onrender.com/api
+
+# Database is not needed - using SQLite with persistent disk
+
