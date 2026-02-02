@@ -4,18 +4,18 @@
   "description": "Backend API for Scamicide - Job Scam Detection Service",
   "main": "src/server.js",
   "type": "module",
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "scripts": {
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
+    "build:frontend": "cd ../frontend && npm install && npm run build",
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js --coverage",
-    "test:watch": "node --experimental-vm-modules node_modules/jest/bin/jest.js --watch"
+    "test:watch": "node --experimental-vm-modules node_modules/jest/bin/jest.js --watch",
+    "preinstall": "echo \"Installing dependencies...\""
   },
-  "keywords": [
-    "scam-detection",
-    "job-safety",
-    "api",
-    "security"
-  ],
+  "keywords": ["scam-detection", "job-safety", "api", "security"],
   "author": "Scamicide Team",
   "license": "MIT",
   "dependencies": {

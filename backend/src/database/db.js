@@ -12,7 +12,7 @@ import fs from 'fs';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-// Database file path
+// Database file path - use /data on Render for persistence
 const DB_PATH = process.env.DB_PATH || join(__dirname, '../../data/scamicide.db');
 
 // Create database instance
@@ -27,14 +27,25 @@ export const initializeDatabase = () => {
     return db; // Already initialized
   }
 
+  console.log('📦 Initializing database...');
+  console.log(`📍 Database path: ${DB_PATH}`);
+  console.log(`📍 NODE_ENV: ${process.env.NODE_ENV || 'development'}`);
+
   try {
     // Ensure data directory exists
     const dataDir = dirname(DB_PATH);
+    console.log(`📂 Data directory: ${dataDir}`);
+    
     if (!fs.existsSync(dataDir)) {
+      console.log('📁 Creating data directory...');
       fs.mkdirSync(dataDir, { recursive: true });
+      console.log('✅ Data directory created');
+    } else {
+      console.log('✅ Data directory exists');
     }
 
     db = new Database(DB_PATH);
+    console.log('✅ Database connection established');
     
     // Enable foreign keys
     db.pragma('foreign_keys = ON');
@@ -42,11 +53,12 @@ export const initializeDatabase = () => {
     // Create tables
     createTables();
 
-    console.log(`✅ Database connected: ${DB_PATH}`);
+    console.log(`✅ Database initialized successfully: ${DB_PATH}`);
     return db;
   } catch (error) {
     dbInitializationError = error;
     console.error('❌ Database initialization failed:', error.message);
+    console.error('Stack:', error.stack);
     // Return null but don't throw - allow app to start without DB
     return null;
   }
@@ -64,6 +76,7 @@ const isDatabaseAvailable = () => {
     db.prepare('SELECT 1').get();
     return true;
   } catch (e) {
+    console.warn('Database health check failed:', e.message);
     return false;
   }
 };
@@ -72,27 +85,32 @@ const isDatabaseAvailable = () => {
  * Create required database tables
  */
 const createTables = () => {
-  // Analysis history table
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS analysis_history (
-      id TEXT PRIMARY KEY,
-      input_text TEXT NOT NULL,
-      input_url TEXT,
-      risk_score INTEGER NOT NULL,
-      risk_category TEXT NOT NULL,
-      red_flags TEXT NOT NULL,
-      explanation TEXT,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    )
-  `);
+  try {
+    // Analysis history table
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS analysis_history (
+        id TEXT PRIMARY KEY,
+        input_text TEXT NOT NULL,
+        input_url TEXT,
+        risk_score INTEGER NOT NULL,
+        risk_category TEXT NOT NULL,
+        red_flags TEXT NOT NULL,
+        explanation TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
 
-  // Create index on created_at for faster sorting
-  db.exec(`
-    CREATE INDEX IF NOT EXISTS idx_analysis_history_created_at 
-    ON analysis_history(created_at DESC)
-  `);
+    // Create index on created_at for faster sorting
+    db.exec(`
+      CREATE INDEX IF NOT EXISTS idx_analysis_history_created_at 
+      ON analysis_history(created_at DESC)
+    `);
 
-  console.log('✅ Database tables created');
+    console.log('✅ Database tables created/verified');
+  } catch (error) {
+    console.error('❌ Error creating tables:', error.message);
+    throw error;
+  }
 };
 
 /**
@@ -286,6 +304,11 @@ export const getAnalysisStats = () => {
  * Clear all analysis history
  */
 export const clearAllHistory = () => {
+  if (!isDatabaseAvailable()) {
+    console.warn('Database not available');
+    return 0;
+  }
+  
   const stmt = db.prepare(`
     DELETE FROM analysis_history
   `);
