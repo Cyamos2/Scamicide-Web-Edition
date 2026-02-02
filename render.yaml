@@ -1,9 +1,13 @@
+# Render Blueprint for Scamicide Deployment
+# https://render.com/docs/blueprint-spec
+
 services:
   # Backend Web Service
   - type: web
     name: scamicide-api
-    repo: christopheramos/Scamicide
-    rootDirectory: backend
+    repo: Cyamos2/Scamicide-Web-Edition
+    branch: main
+    rootDir: backend
     buildCommand: npm install
     startCommand: npm start
     envVars:
@@ -13,15 +17,7 @@ services:
         value: "443"
       - key: DB_PATH
         value: /data/scamicide.db
-      - key: FRONTEND_URL
-        fromService:
-          type: web
-          name: scamicide-frontend
-          property: url
-          optional: true
-
-    # Persistent disk for database
-    disks:
+    disk:
       - name: scamicide-data
         mountPath: /data
         sizeGB: 1
@@ -29,8 +25,9 @@ services:
   # Frontend Static Site
   - type: web
     name: scamicide-frontend
-    repo: christopheramos/Scamicide
-    rootDirectory: frontend
+    repo: Cyamos2/Scamicide-Web-Edition
+    branch: main
+    rootDir: frontend
     buildCommand: npm install && npm run build
     startCommand: npx serve dist -s -l $PORT
     envVars:
@@ -38,6 +35,4 @@ services:
         value: production
       - key: VITE_API_URL
         value: https://scamicide-api.onrender.com/api
-
-# Database is not needed - using SQLite with persistent disk
 
