@@ -1,25 +1,25 @@
-# Fix Analysis Issues - TODO
+# Fix Analysis Issues - DONE
 
 ## Issues Identified
 1. Database not initialized at startup
 2. Field name mismatch between camelCase and snake_case
 3. Inconsistent field names between API and frontend
 
-## Fixes to Implement
+## Fixes Implemented
 
-### Step 1: Fix Database Initialization
+### Step 1: Fix Database Initialization ✅
 - [x] Import and call `initializeDatabase()` in `server.js`
 
-### Step 2: Fix Field Mapping in db.js
+### Step 2: Fix Field Mapping in db.js ✅
 - [x] Update `saveAnalysis` to correctly map camelCase to snake_case
 - [x] Update `getAnalysisHistory` to return consistent field names
 - [x] Update `getAnalysisById` to return consistent field names
 
-### Step 3: Fix API Response Consistency
-- [x] Ensure analyze.js returns consistent field names
+### Step 3: Fix API Response Consistency ✅
+- [x] Updated `analyze.js` to use correct snake_case field names when calling `saveAnalysis`
 
-### Step 4: Fix Frontend History Panel
-- [x] Update field name references to match API response
+### Step 4: Fix Frontend History Panel ✅
+- [x] Frontend already uses snake_case field names matching API response
 
 ## Summary of Changes
 
@@ -33,10 +33,15 @@
 - Updated `getAnalysisById` to return consistent snake_case field names
 - Added defensive parsing for `red_flags` JSON field
 
-### analyze.js
-- No changes needed - already uses correct field names
+### analyze.js (FIXED)
+- Changed field names in `saveAnalysis` call from camelCase to snake_case:
+  - `inputText` → `input_text`
+  - `inputUrl` → `input_url`
+  - `score` → `risk_score`
+  - `category` → `risk_category`
+  - `redFlags` → `red_flags`
 
 ### Frontend files
-- App.jsx - already uses correct field names
-- HistoryPanel.jsx - already uses correct field names
+- App.jsx - uses correct field names
+- HistoryPanel.jsx - uses correct field names (`risk_score`, `risk_category`, `input_text`, etc.)
 

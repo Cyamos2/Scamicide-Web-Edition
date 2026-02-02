@@ -79,11 +79,11 @@ router.post('/',
     if (text && analysisResult.success) {
       try {
         const saved = saveAnalysis({
-          inputText: text.substring(0, 1000),
-          inputUrl: url || null,
-          score: analysisResult.score,
-          category: analysisResult.category,
-          redFlags: analysisResult.redFlags,
+          input_text: text.substring(0, 1000),
+          input_url: url || null,
+          risk_score: analysisResult.score,
+          risk_category: analysisResult.category,
+          red_flags: analysisResult.redFlags,
           explanation: analysisResult.explanation
         });
         analysisResult.id = saved.id;
