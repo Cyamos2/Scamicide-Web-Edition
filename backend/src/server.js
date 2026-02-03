@@ -200,11 +200,15 @@ process.on('uncaughtException', (err) => {
   gracefulShutdown('UNCAUGHT_EXCEPTION');
 });
 
-// Start the server
-startServer().catch((err) => {
-  console.error('❌ Failed to start server:', err);
-  process.exit(1);
-});
+// Start the server (only when not testing)
+if (process.env.NODE_ENV !== 'test') {
+  startServer().catch((err) => {
+    console.error('❌ Failed to start server:', err);
+    process.exit(1);
+  });
+} else {
+  console.log('ℹ️ Skipping HTTP server start in test environment');
+}
 
 export default app;
 

@@ -35,7 +35,12 @@ function App() {
       }
       setResult(enrichedResult)
     } catch (err) {
-      setError(err.message || 'Analysis failed. Please try again.')
+      const msg = err.message || 'Analysis failed. Please try again.'
+      if (msg.startsWith('Network error')) {
+        setError(`${msg} — please check that the API is reachable and that VITE_API_URL is set correctly.`)
+      } else {
+        setError(msg)
+      }
     } finally {
       setLoading(false)
     }
@@ -274,7 +279,12 @@ Only serious candidates apply!`
                   }
                   setResult(enrichedResult)
                 } catch (err) {
-                  setError(err.message || 'Analysis failed')
+                  const msg = err.message || 'Analysis failed'
+                  if (msg.startsWith('Network error')) {
+                    setError(`${msg} — please check that the API is reachable and that VITE_API_URL is set correctly.`)
+                  } else {
+                    setError(msg)
+                  }
                 } finally {
                   setLoading(false)
                 }
