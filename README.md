@@ -100,6 +100,58 @@ DB_PATH=./data/scamicide.db
 FRONTEND_URL=http://localhost:5173
 ```
 
+## Deployment (Render) 🚀
+
+Follow these steps to deploy Scamicide on Render:
+
+1. **Add a persistent disk** ✅
+   - In Render Dashboard → *Service Settings* → *Disks* → *Add Disk*
+   - Size: **1 GB**, Mount path: **/data** (required for database persistence)
+
+2. **Backend service configuration** 🔧
+   - Service type: **Web** (Node)
+   - Root directory: `backend`
+   - Build command: `npm install && npm run build:frontend`
+   - Start command: `npm start`
+   - Set environment variables (do **not** hard-code `PORT`):
+     - `NODE_ENV=production`
+     - `DB_PATH=/data/scamicide.db`
+   - Note: Render will provide a `PORT` env var at runtime — the server binds to it automatically.
+
+3. **Frontend service configuration** 🧭
+   - Service type: **Static** (preferred)
+   - Root directory: `frontend`
+   - Build command: `npm install && npm run build`
+   - Publish path: `dist`
+   - Set `VITE_API_URL` to your backend URL after deploy (e.g. `https://<your-backend>.onrender.com/api`)
+
+4. **Native module build** 🔨
+   - `better-sqlite3` is a native module — the backend includes an `install` script that runs:
+     ```bash
+     npm rebuild better-sqlite3 --build-from-source || true
+     ```
+     This helps ensure the module compiles correctly on Render.
+
+5. **Health & readiness checks** ✅
+   - Use the built-in endpoints: `GET /health`, `GET /live`, `GET /ready`
+   - Configure Render health checks to hit `/live` or `/ready` as desired.
+
+6. **Local test checklist** 🧪
+   - From repo root:
+     ```bash
+     cd backend && npm install
+     npm run build:frontend   # builds frontend into ../frontend/dist
+     npm start
+     # Verify: http://localhost:3001/health
+     ```
+
+7. **Troubleshooting tips** ⚠️
+   - If the DB file is missing, ensure the disk is mounted at `/data` and `DB_PATH` is set.
+   - Check Render service logs for `better-sqlite3` build errors and rerun `npm rebuild better-sqlite3 --build-from-source` locally to reproduce.
+   - If frontend isn't served by the backend, verify the `frontend/dist` folder exists after the build.
+
+> Note: A `render.yaml` blueprint is included in the repo for convenience. Edit it in Render or import it directly.
+
 ## License
 
 MIT

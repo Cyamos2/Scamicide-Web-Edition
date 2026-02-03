@@ -13,7 +13,8 @@
     "build:frontend": "cd ../frontend && npm install && npm run build",
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js --coverage",
     "test:watch": "node --experimental-vm-modules node_modules/jest/bin/jest.js --watch",
-    "preinstall": "echo \"Installing dependencies...\""
+    "preinstall": "echo \"Installing dependencies...\"",
+    "install": "npm rebuild better-sqlite3 --build-from-source || true"
   },
   "keywords": ["scam-detection", "job-safety", "api", "security"],
   "author": "Scamicide Team",

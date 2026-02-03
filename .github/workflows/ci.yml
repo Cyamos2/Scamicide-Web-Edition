@@ -1,0 +1,77 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    name: Build & Test
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [18.x]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+
+      - name: Install backend dependencies
+        run: npm ci
+        working-directory: backend
+
+      - name: Rebuild better-sqlite3 (best-effort)
+        run: npm rebuild better-sqlite3 --build-from-source || true
+        working-directory: backend
+
+      - name: Build frontend (via backend helper)
+        run: npm run build:frontend --if-present
+        working-directory: backend
+
+      - name: Run backend tests
+        run: npm test --if-present
+        working-directory: backend
+
+      - name: Smoke test API (start server and hit /health)
+        run: |
+          export PORT=3001
+          export NODE_ENV=production
+          export DB_PATH=./data/test.db
+          mkdir -p ./data
+          node src/server.js & echo $! > server.pid
+          # wait for server to start
+          sleep 3
+          curl -f http://localhost:3001/health
+          kill $(cat server.pid) || true
+        working-directory: backend
+
+  frontend:
+    name: Frontend Build
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [18.x]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+
+      - name: Install frontend dependencies
+        run: npm ci
+        working-directory: frontend
+
+      - name: Build frontend
+        run: npm run build
+        working-directory: frontend
