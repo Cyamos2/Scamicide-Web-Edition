@@ -24,7 +24,7 @@ jobs:
           cache: 'npm'
 
       - name: Install backend dependencies
-        run: npm ci
+        run: npm ci --no-audit --no-fund
         working-directory: backend
 
       - name: Rebuild better-sqlite3 (best-effort)
@@ -41,14 +41,21 @@ jobs:
 
       - name: Smoke test API (start server and hit /health)
         run: |
+          set -euo pipefail
           export PORT=3001
           export NODE_ENV=production
           export DB_PATH=./data/test.db
           mkdir -p ./data
-          node src/server.js & echo $! > server.pid
-          # wait for server to start
-          sleep 3
-          curl -f http://localhost:3001/health
+          rm -f server.pid server.log || true
+          node src/server.js > server.log 2>&1 & echo $! > server.pid
+          # wait for server to start (give it a bit more time)
+          sleep 6
+          if ! curl -f http://localhost:3001/health; then
+            echo "---- server.log (last 200 lines) ----"
+            tail -n 200 server.log || true
+            kill $(cat server.pid) || true
+            exit 1
+          fi
           kill $(cat server.pid) || true
         working-directory: backend
 
@@ -69,7 +76,7 @@ jobs:
           cache: 'npm'
 
       - name: Install frontend dependencies
-        run: npm ci
+        run: npm ci --no-audit --no-fund
         working-directory: frontend
 
       - name: Build frontend
