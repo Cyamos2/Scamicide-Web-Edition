@@ -9,12 +9,29 @@ const api = axios.create({
 })
 
 export const analyzeText = async (text, url = null) => {
-  const response = await api.post('/analyze', { text, url })
-  // Unwrap the response to return just the analysis data
-  if (response.data && response.data.success) {
-    return response.data.data
+  try {
+    const response = await api.post('/analyze', { text, url })
+
+    if (response.data && response.data.success) {
+      return response.data.data
+    }
+
+    // API returned 200 but success=false
+    const apiError = response.data?.error || {}
+    const details = Array.isArray(apiError.details) ? apiError.details.map(d => d.msg || JSON.stringify(d)).join('; ') : apiError.details
+    const apiMsg = apiError.message + (details ? `: ${details}` : '') || 'Analysis failed'
+    throw new Error(apiMsg)
+  } catch (err) {
+    // Axios network or non-2xx errors
+    if (err.response && err.response.data && err.response.data.error) {
+      const apiError = err.response.data.error
+      const details = Array.isArray(apiError.details) ? apiError.details.map(d => d.msg || JSON.stringify(d)).join('; ') : apiError.details
+      const apiMsg = apiError.message + (details ? `: ${details}` : '') || 'Analysis failed'
+      throw new Error(apiMsg)
+    }
+    // Fallback to network error message
+    throw new Error(err.message ? `Network error: ${err.message}` : 'Analysis failed')
   }
-  throw new Error(response.data?.error?.message || 'Analysis failed')
 }
 
 export const getHistory = async (limit = 50, offset = 0) => {

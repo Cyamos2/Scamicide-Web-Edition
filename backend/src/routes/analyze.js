@@ -46,7 +46,10 @@ router.post('/',
   asyncHandler(async (req, res) => {
     const { text, url } = req.body;
 
+    console.log('➡️ /api/analyze request', { ip: req.ip, textLength: text ? String(text).length : 0, hasUrl: !!url });
+
     if (!text && !url) {
+      console.warn('Missing input for analysis request', { ip: req.ip });
       return res.status(400).json({
         success: false,
         error: {
@@ -66,24 +69,27 @@ router.post('/',
         analysisResult = await analyzeUrl(url);
       }
     } catch (analysisError) {
-      console.error('Analysis error:', analysisError);
+      console.error('Analysis exception:', analysisError);
       return res.status(500).json({
         success: false,
         error: {
           message: 'Failed to analyze content',
-          code: 'ANALYSIS_ERROR',
-          status: 500
+          code: 'ANALYSIS_EXCEPTION',
+          status: 500,
+          details: analysisError?.message
         }
       });
     }
 
     if (!analysisResult || !analysisResult.success) {
+      console.warn('Analysis failed for request', { ip: req.ip, result: analysisResult });
       return res.status(400).json({
         success: false,
         error: {
           message: analysisResult?.error || 'Analysis failed',
           code: 'ANALYSIS_FAILED',
-          status: 400
+          status: 400,
+          details: analysisResult?.reason
         }
       });
     }
