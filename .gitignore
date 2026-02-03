@@ -29,6 +29,7 @@ Thumbs.db
 # Database
 *.db
 *.sqlite
+backend/server.pid
 
 # Cache
 .cache/
