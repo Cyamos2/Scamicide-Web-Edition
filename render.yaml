@@ -9,24 +9,22 @@ services:
     repo: Cyamos2/Scamicide-Web-Edition
     branch: main
     rootDir: backend
-    buildCommand: npm install
+    buildCommand: npm install && npm run build:frontend
     startCommand: npm start
     envVars:
       - key: NODE_ENV
         value: production
-      - key: PORT
-        value: "443"
       - key: DB_PATH
         value: /data/scamicide.db
 
   # Frontend Static Site
-  - type: web
+  - type: static
     name: scamicide-frontend
     repo: Cyamos2/Scamicide-Web-Edition
     branch: main
     rootDir: frontend
     buildCommand: npm install && npm run build
-    startCommand: npx serve dist -s -l $PORT
+    publishPath: dist
     envVars:
       - key: NODE_ENV
         value: production
