@@ -31,6 +31,12 @@ Thumbs.db
 *.sqlite
 backend/server.pid
 
+# Test / build artifacts
+coverage/
+backend/coverage/
+*.pid
+
+
 # Cache
 .cache/
 .eslintcache

@@ -149,6 +149,9 @@ Follow these steps to deploy Scamicide on Render:
    - If the DB file is missing, ensure the disk is mounted at `/data` and `DB_PATH` is set.
    - Check Render service logs for `better-sqlite3` build errors and rerun `npm rebuild better-sqlite3 --build-from-source` locally to reproduce.
    - If frontend isn't served by the backend, verify the `frontend/dist` folder exists after the build.
+   - If you see an "Analysis failed" message in the UI:
+     - If the message begins with `Network error`, the frontend cannot reach the backend. Confirm `VITE_API_URL` is set on the frontend static site to the backend API base (e.g., `https://<backend>.onrender.com/api`) and that CORS / allowed origins are set appropriately.
+     - If the message is `Validation failed`, the backend requires `text` to be between **10 and 50,000** characters. Short inputs will trigger validation errors and the UI will show the specific validation message.
 
 > Note: A `render.yaml` blueprint is included in the repo for convenience. Edit it in Render or import it directly.
 
