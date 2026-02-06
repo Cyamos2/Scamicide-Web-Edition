@@ -142,3 +142,5 @@ Total score = Sum of all detector scores, capped at 100
 
 Total: 6-7 hours
 
+## Errors:
+- Network error: undefined — please check that the API is reachable and that VITE_API_URL is set correctly.
